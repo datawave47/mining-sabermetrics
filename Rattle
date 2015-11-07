@@ -1,7 +1,7 @@
 # Rattle is Copyright (c) 2006-2015 Togaware Pty Ltd.
 
 #============================================================
-# Rattle timestamp: 2015-11-05 21:42:04 x86_64-w64-mingw32 
+# Rattle timestamp: 2015-11-06 00:47:57 x86_64-w64-mingw32 
 
 # Rattle version 3.5.0 user 'Sofranko'
 
@@ -30,14 +30,14 @@ scoring  <- ! building
 crv$seed <- 42 
 
 #============================================================
-# Rattle timestamp: 2015-11-05 21:42:39 x86_64-w64-mingw32 
+# Rattle timestamp: 2015-11-06 00:48:27 x86_64-w64-mingw32 
 
 # Load the data.
 
-crs$dataset <- read.csv("file:///C:/Users/Sofranko/Documents/Team Statistics.csv", na.strings=c(".", "NA", "", "?"), strip.white=TRUE, encoding="UTF-8")
+crs$dataset <- read.csv("file:///I:/11111/30 oct/SNHU/DAT-520 Decision Methods and Modeling/Assignments/Final Report/Data Set/Team Statistics.csv", na.strings=c(".", "NA", "", "?"), strip.white=TRUE, encoding="UTF-8")
 
 #============================================================
-# Rattle timestamp: 2015-11-05 21:42:39 x86_64-w64-mingw32 
+# Rattle timestamp: 2015-11-06 00:48:27 x86_64-w64-mingw32 
 
 # Note the user selections. 
 
@@ -53,13 +53,15 @@ crs$test <- setdiff(setdiff(seq_len(nrow(crs$dataset)), crs$train), crs$validate
 
 crs$input <- c("Season", "Team", "FP", "wOBA",
      "wRCplus", "BsR", "ERAminus", "WHIP",
-     "W", "L", "Games", "WinPercentage")
+     "W", "L", "Games", "WinPercentage",
+     "PostSeason", "WAR", "OBP", "ERA")
 
 crs$numeric <- c("Season", "FP", "wOBA", "wRCplus",
      "BsR", "ERAminus", "WHIP", "W",
-     "L", "Games", "WinPercentage")
+     "L", "Games", "WinPercentage", "WAR",
+     "OBP", "ERA")
 
-crs$categoric <- "Team"
+crs$categoric <- c("Team", "PostSeason")
 
 crs$target  <- "SeasonOutcome"
 crs$risk    <- NULL
@@ -68,7 +70,66 @@ crs$ignore  <- NULL
 crs$weights <- NULL
 
 #============================================================
-# Rattle timestamp: 2015-11-05 21:43:02 x86_64-w64-mingw32 
+# Rattle timestamp: 2015-11-06 00:48:47 x86_64-w64-mingw32 
+
+# Note the user selections. 
+
+# Build the training/validate/test datasets.
+
+set.seed(crv$seed) 
+crs$nobs <- nrow(crs$dataset) # 1622 observations 
+crs$sample <- crs$train <- sample(nrow(crs$dataset), 0.7*crs$nobs) # 1135 observations
+crs$validate <- sample(setdiff(seq_len(nrow(crs$dataset)), crs$train), 0.15*crs$nobs) # 243 observations
+crs$test <- setdiff(setdiff(seq_len(nrow(crs$dataset)), crs$train), crs$validate) # 244 observations
+
+# The following variable selections have been noted.
+
+crs$input <- c("wOBA", "wRCplus", "ERAminus", "WHIP",
+     "W", "L")
+
+crs$numeric <- c("wOBA", "wRCplus", "ERAminus", "WHIP",
+     "W", "L")
+
+crs$categoric <- NULL
+
+crs$target  <- "PostSeason"
+crs$risk    <- NULL
+crs$ident   <- NULL
+crs$ignore  <- c("Season", "Team", "FP", "BsR", "Games", "WinPercentage", "SeasonOutcome", "WAR", "OBP", "ERA")
+crs$weights <- NULL
+
+#============================================================
+# Rattle timestamp: 2015-11-06 00:48:50 x86_64-w64-mingw32 
+
+# Decision Tree 
+
+# The 'rpart' package provides the 'rpart' function.
+
+library(rpart, quietly=TRUE)
+
+# Reset the random number seed to obtain the same results each time.
+
+set.seed(crv$seed)
+
+# Build the Decision Tree model.
+
+crs$rpart <- rpart(PostSeason ~ .,
+    data=crs$dataset[crs$train, c(crs$input, crs$target)],
+    method="class",
+    parms=list(split="information"),
+    control=rpart.control(usesurrogate=0, 
+        maxsurrogate=0))
+
+# Generate a textual view of the Decision Tree model.
+
+print(crs$rpart)
+printcp(crs$rpart)
+cat("\n")
+
+# Time taken: 0.02 secs
+
+#============================================================
+# Rattle timestamp: 2015-11-06 00:48:59 x86_64-w64-mingw32 
 
 # Note the user selections. 
 
@@ -88,26 +149,14 @@ crs$numeric <- c("wOBA", "wRCplus", "ERAminus", "WHIP")
 
 crs$categoric <- NULL
 
-crs$target  <- "SeasonOutcome"
+crs$target  <- "PostSeason"
 crs$risk    <- NULL
 crs$ident   <- NULL
-crs$ignore  <- c("Season", "Team", "FP", "BsR", "W", "L", "Games", "WinPercentage")
+crs$ignore  <- c("Season", "Team", "FP", "BsR", "W", "L", "Games", "WinPercentage", "SeasonOutcome", "WAR", "OBP", "ERA")
 crs$weights <- NULL
 
 #============================================================
-# Rattle timestamp: 2015-11-05 21:43:06 x86_64-w64-mingw32 
-
-# The 'Hmisc' package provides the 'contents' function.
-
-library(Hmisc, quietly=TRUE)
-
-# Obtain a summary of the dataset.
-
-contents(crs$dataset[crs$sample, c(crs$input, crs$risk, crs$target)])
-summary(crs$dataset[crs$sample, c(crs$input, crs$risk, crs$target)])
-
-#============================================================
-# Rattle timestamp: 2015-11-05 21:43:13 x86_64-w64-mingw32 
+# Rattle timestamp: 2015-11-06 00:49:01 x86_64-w64-mingw32 
 
 # Decision Tree 
 
@@ -121,7 +170,7 @@ set.seed(crv$seed)
 
 # Build the Decision Tree model.
 
-crs$rpart <- rpart(SeasonOutcome ~ .,
+crs$rpart <- rpart(PostSeason ~ .,
     data=crs$dataset[crs$train, c(crs$input, crs$target)],
     method="class",
     parms=list(split="information"),
@@ -134,13 +183,175 @@ print(crs$rpart)
 printcp(crs$rpart)
 cat("\n")
 
-# Time taken: 0.02 secs
+# Time taken: 0.01 secs
 
 #============================================================
-# Rattle timestamp: 2015-11-05 21:43:17 x86_64-w64-mingw32 
+# Rattle timestamp: 2015-11-06 00:49:19 x86_64-w64-mingw32 
 
 # Plot the resulting Decision Tree. 
 
 # We use the rpart.plot package.
 
-fancyRpartPlot(crs$rpart, main="Decision Tree Team Statistics.csv $ SeasonOutcome")
+fancyRpartPlot(crs$rpart, main="Decision Tree Team Statistics.csv $ PostSeason")
+
+#============================================================
+# Rattle timestamp: 2015-11-06 01:02:52 x86_64-w64-mingw32 
+
+# Evaluate model performance. 
+
+# Generate an Error Matrix for the Decision Tree model.
+
+# Obtain the response from the Decision Tree model.
+
+crs$pr <- predict(crs$rpart, newdata=crs$dataset[crs$validate, c(crs$input, crs$target)], type="class")
+
+# Generate the confusion matrix showing counts.
+
+table(crs$dataset[crs$validate, c(crs$input, crs$target)]$PostSeason, crs$pr,
+        dnn=c("Actual", "Predicted"))
+
+# Generate the confusion matrix showing proportions.
+
+pcme <- function(actual, cl)
+{
+  x <- table(actual, cl)
+  tbl <- cbind(round(x/length(actual), 2),
+               Error=round(c(x[1,2]/sum(x[1,]),
+                             x[2,1]/sum(x[2,])), 2))
+  names(attr(tbl, "dimnames")) <- c("Actual", "Predicted")
+  return(tbl)
+};
+pcme(crs$dataset[crs$validate, c(crs$input, crs$target)]$PostSeason, crs$pr)
+
+# Calculate the overall error percentage.
+
+overall <- function(x)
+{
+  if (nrow(x) == 2) 
+    cat((x[1,2] + x[2,1]) / sum(x)) 
+  else
+    cat(1 - (x[1,rownames(x)]) / sum(x))
+} 
+overall(table(crs$pr, crs$dataset[crs$validate, c(crs$input, crs$target)]$PostSeason,  
+        dnn=c("Predicted", "Actual")))
+
+# Calculate the averaged class error percentage.
+
+avgerr <- function(x) 
+	cat(mean(c(x[1,2], x[2,1]) / apply(x, 1, sum))) 
+avgerr(table(crs$pr, crs$dataset[crs$validate, c(crs$input, crs$target)]$PostSeason,  
+        dnn=c("Predicted", "Actual")))
+
+#============================================================
+# Rattle timestamp: 2015-11-06 01:41:22 x86_64-w64-mingw32 
+
+# Note the user selections. 
+
+# Build the training/validate/test datasets.
+
+set.seed(crv$seed) 
+crs$nobs <- nrow(crs$dataset) # 1622 observations 
+crs$sample <- crs$train <- sample(nrow(crs$dataset), 0.7*crs$nobs) # 1135 observations
+crs$validate <- sample(setdiff(seq_len(nrow(crs$dataset)), crs$train), 0.15*crs$nobs) # 243 observations
+crs$test <- setdiff(setdiff(seq_len(nrow(crs$dataset)), crs$train), crs$validate) # 244 observations
+
+# The following variable selections have been noted.
+
+crs$input <- c("wRCplus", "ERAminus")
+
+crs$numeric <- c("wRCplus", "ERAminus")
+
+crs$categoric <- NULL
+
+crs$target  <- "PostSeason"
+crs$risk    <- NULL
+crs$ident   <- NULL
+crs$ignore  <- c("Season", "Team", "FP", "wOBA", "BsR", "WHIP", "W", "L", "Games", "WinPercentage", "SeasonOutcome", "WAR", "OBP", "ERA")
+crs$weights <- NULL
+
+#============================================================
+# Rattle timestamp: 2015-11-06 01:41:26 x86_64-w64-mingw32 
+
+# Decision Tree 
+
+# The 'rpart' package provides the 'rpart' function.
+
+library(rpart, quietly=TRUE)
+
+# Reset the random number seed to obtain the same results each time.
+
+set.seed(crv$seed)
+
+# Build the Decision Tree model.
+
+crs$rpart <- rpart(PostSeason ~ .,
+    data=crs$dataset[crs$train, c(crs$input, crs$target)],
+    method="class",
+    parms=list(split="information"),
+    control=rpart.control(usesurrogate=0, 
+        maxsurrogate=0))
+
+# Generate a textual view of the Decision Tree model.
+
+print(crs$rpart)
+printcp(crs$rpart)
+cat("\n")
+
+# Time taken: 0.01 secs
+
+#============================================================
+# Rattle timestamp: 2015-11-06 01:41:33 x86_64-w64-mingw32 
+
+# Plot the resulting Decision Tree. 
+
+# We use the rpart.plot package.
+
+fancyRpartPlot(crs$rpart, main="Decision Tree Team Statistics.csv $ PostSeason")
+
+#============================================================
+# Rattle timestamp: 2015-11-06 01:52:47 x86_64-w64-mingw32 
+
+# Evaluate model performance. 
+
+# Generate an Error Matrix for the Decision Tree model.
+
+# Obtain the response from the Decision Tree model.
+
+crs$pr <- predict(crs$rpart, newdata=crs$dataset[crs$validate, c(crs$input, crs$target)], type="class")
+
+# Generate the confusion matrix showing counts.
+
+table(crs$dataset[crs$validate, c(crs$input, crs$target)]$PostSeason, crs$pr,
+        dnn=c("Actual", "Predicted"))
+
+# Generate the confusion matrix showing proportions.
+
+pcme <- function(actual, cl)
+{
+  x <- table(actual, cl)
+  tbl <- cbind(round(x/length(actual), 2),
+               Error=round(c(x[1,2]/sum(x[1,]),
+                             x[2,1]/sum(x[2,])), 2))
+  names(attr(tbl, "dimnames")) <- c("Actual", "Predicted")
+  return(tbl)
+};
+pcme(crs$dataset[crs$validate, c(crs$input, crs$target)]$PostSeason, crs$pr)
+
+# Calculate the overall error percentage.
+
+overall <- function(x)
+{
+  if (nrow(x) == 2) 
+    cat((x[1,2] + x[2,1]) / sum(x)) 
+  else
+    cat(1 - (x[1,rownames(x)]) / sum(x))
+} 
+overall(table(crs$pr, crs$dataset[crs$validate, c(crs$input, crs$target)]$PostSeason,  
+        dnn=c("Predicted", "Actual")))
+
+# Calculate the averaged class error percentage.
+
+avgerr <- function(x) 
+	cat(mean(c(x[1,2], x[2,1]) / apply(x, 1, sum))) 
+avgerr(table(crs$pr, crs$dataset[crs$validate, c(crs$input, crs$target)]$PostSeason,  
+        dnn=c("Predicted", "Actual")))
